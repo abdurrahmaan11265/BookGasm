@@ -13,6 +13,24 @@ import helmet from "helmet";
 // console.log("Type of password:",  process.env.GOOGLE_CLIENT_ID); // should be 'string'
 
 const app = express();
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'self'"],
+        fontSrc: ["'self'", "data:"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        objectSrc: ["'none'"],
+        baseUri: ["'self'"],
+        frameAncestors: ["'none'"]
+      }
+    }
+  })
+);
+
 const port = 3000;
 let books = [];
 app.use(
@@ -27,11 +45,6 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));  //giving the requests the body
 app.use(express.static("public"));
-app.use(
-  helmet({
-    contentSecurityPolicy: false, // disable CSP
-  })
-);
 app.use(passport.initialize());    // Initialize passport
 app.use(passport.session());       // Use sessions with passport
 
