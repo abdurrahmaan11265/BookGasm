@@ -7,29 +7,11 @@ import { Strategy as LocalStrategy } from "passport-local";
 import GoogleStrategy from "passport-google-oauth2";
 import session from "express-session";
 env.config();
-import helmet from "helmet";
 // console.log(" DB_USER:", process.env.DB_USER);
 // console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
 // console.log("Type of password:",  process.env.GOOGLE_CLIENT_ID); // should be 'string'
 
 const app = express();
-
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: false,
-      directives: {
-        defaultSrc: ["'self'"],
-        fontSrc: ["'self'", "data:"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:"],
-        objectSrc: ["'none'"],
-        baseUri: ["'self'"],
-        frameAncestors: ["'none'"]
-      }
-    }
-  })
-);
 
 const port = 3000;
 let books = [];
@@ -260,8 +242,8 @@ app.post('/logout', function (req, res, next) {
     res.redirect('/');
   });
 });
-// app.listen(port, () => {
-//   console.log(`BookGasm running at http://localhost:${port}`);
-// })
+app.listen(port, () => {
+  console.log(`BookGasm running at http://localhost:${port}`);
+})
 
-export default app;
+// export default app;
