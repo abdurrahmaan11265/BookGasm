@@ -7,6 +7,7 @@ import { Strategy as LocalStrategy } from "passport-local";
 import GoogleStrategy from "passport-google-oauth2";
 import session from "express-session";
 env.config();
+import helmet from "helmet";
 // console.log(" DB_USER:", process.env.DB_USER);
 // console.log("DB_PASSWORD:", process.env.DB_PASSWORD);
 // console.log("Type of password:",  process.env.GOOGLE_CLIENT_ID); // should be 'string'
@@ -26,7 +27,11 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));  //giving the requests the body
 app.use(express.static("public"));
-
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // disable CSP
+  })
+);
 app.use(passport.initialize());    // Initialize passport
 app.use(passport.session());       // Use sessions with passport
 
