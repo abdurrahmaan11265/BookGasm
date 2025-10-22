@@ -2,7 +2,7 @@ import express from "express";
 import pg from "pg"
 import env from "dotenv";
 import bcrypt from "bcrypt";
-import passport from "passport"; 
+import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import GoogleStrategy from "passport-google-oauth2";
 import session from "express-session";
@@ -19,7 +19,7 @@ app.use(
     secret: process.env.SESSION_SECRET, // Secret for encrypting the session
     resave: false,
     saveUninitialized: true,
-       cookie: {
+    cookie: {
       maxAge: 24 * 60 * 60 * 1000 // 24 hours in milliseconds
     }
   })
@@ -31,7 +31,7 @@ app.use(passport.initialize());    // Initialize passport
 app.use(passport.session());       // Use sessions with passport
 
 const db = new pg.Client({ // connecting to database
-user: process.env.DB_USER,
+  user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
   password: (process.env.DB_PASSWORD),
@@ -46,12 +46,12 @@ async function getBooks(searchQuery = "", userId) {
   let result;
   try {
     if (searchQuery.length > 0) {  //checks for any search
- result = await db.query(
+      result = await db.query(
         "SELECT * FROM books WHERE user_id = $1 AND title ILIKE $2",
         [userId, `%${searchQuery}%`]
       );
     } else {
-      result = await db.query("SELECT * FROM books WHERE user_id = $1",[userId]);
+      result = await db.query("SELECT * FROM books WHERE user_id = $1", [userId]);
     }
     return result.rows;
   } catch (err) {
@@ -59,10 +59,10 @@ async function getBooks(searchQuery = "", userId) {
     return [];
   }
 }
-app.get("/",async(req,res)=>{ //homepage
+app.get("/", async (req, res) => { //homepage
   res.render("home.ejs");
 });
-app.get("/register",async(req,res)=>{//signup page
+app.get("/register", async (req, res) => {//signup page
   res.render("register.ejs");
 })
 app.post("/register", async (req, res) => {
@@ -111,68 +111,65 @@ app.get("/books", async (req, res) => {
   }
 });
 
-app.get('/add',(req,res)=>{ //renders the add page
+app.get('/add', (req, res) => { //renders the add page
 
   res.render("book-form.ejs");
 });
 
-app.post('/add',async(req,res)=>{   //add route
-     
+app.post('/add', async (req, res) => {   //add route
 
- try{ 
+
+  try {
     console.log(req.body)
     const { id, title, author, summary, link, rating } = req.body;
-  const result = await db.query("SELECT * FROM books WHERE id = $1",[id]);
-  console.log(req.body);
-  if(result.rows.length >0){
-         res.send(`<h1>${result}</h1>`)
-
-}
-  else{
-    const image = `https://covers.openlibrary.org/b/isbn/${id}-M.jpg`;
-  await db.query(
+    const result = await db.query("SELECT 1 FROM books WHERE id = $1 AND user_id = $2", [id, req.user.user_id]);
+    console.log(req.body);
+    if (result.rows.length > 0) {
+      return res.status(409).send("<h1>Book already exists</h1>");
+    } else {
+      const image = `https://covers.openlibrary.org/b/isbn/${id}-M.jpg`;
+      await db.query(
         "INSERT INTO books (id, title, author, summary, image, link, rating, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
         [id, title, author, summary, image, link, rating, req.user.user_id]
       );
 
-  res.redirect("/books");
-  }
-}
-  catch(err){
+      res.redirect("/books");
+    }
+  } catch (err) {
     console.log(err);
   }
 })
 
-app.post('/delete/:id', async(req,res)=>{  //deleting books via id
-    try{
-      console.log(req.params.id);
-        await db.query("DELETE FROM books WHERE id = $1 && user_id = $2",[req.params.id,req.user.user_id]);
-        res.redirect("/books");
-    }
-    catch(err){
-      console.log(err.stack);
-    }
+app.post('/delete/:id', async (req, res) => {  //deleting books via id
+  try {
+    console.log(req.params.id);
+    await db.query("DELETE FROM books WHERE id = $1 AND user_id = $2", [req.params.id, req.user.user_id]);
+    res.redirect("/books");
+  }
+  catch (err) {
+    console.log(err.stack);
+  }
 })
 app.get("/auth/google",
-    passport.authenticate("google", {
+  passport.authenticate("google", {
     scope: ["profile", "email"],
-  })  
+  })
 );
 app.get("/auth/google/books",
-   passport.authenticate("google", {
+  passport.authenticate("google", {
     successRedirect: "/books",
     failureRedirect: "/",
   })
-  
+
 )
-app.post('/', 
+app.post('/',
   passport.authenticate('local', {
     successRedirect: '/books',
     failureRedirect: '/',
   })
 );
 passport.use(new LocalStrategy(
-  async function(username, password, done) {
+  async function (username, password, done) {
     try {
       const result = await db.query("SELECT * FROM users WHERE email = $1", [username]);
       const user = result.rows[0];
@@ -194,32 +191,32 @@ passport.use(new LocalStrategy(
 ));
 
 passport.use("google",
-    new GoogleStrategy( 
-      {
-        clientID : process.env.GOOGLE_CLIENT_ID,
-        clientSecret : process.env.GOOGLE_CLIENT_SECRET,
-         callbackURL: "http://localhost:3000/auth/google/books",
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:3000/auth/google/books",
       userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
-      },
-      async (accessToken, refreshToken, profile, cb)=>{
-        try{
-          // console.log(profile);
-          const result = await db.query("SELECT * FROM users WHERE email = $1", [profile.email,]);
-          if(result.rows.length === 0){
-            const newUser = await db.query(
+    },
+    async (accessToken, refreshToken, profile, cb) => {
+      try {
+        // console.log(profile);
+        const result = await db.query("SELECT * FROM users WHERE email = $1", [profile.email,]);
+        if (result.rows.length === 0) {
+          const newUser = await db.query(
             "INSERT INTO users (email) VALUES ($1)",
             [profile.email]
           );
-           return cb(null, result.rows[0]);
+          return cb(null, result.rows[0]);
         }
-        else{
-           return cb(null, result.rows[0]);
+        else {
+          return cb(null, result.rows[0]);
         }
-        }catch(err){
-          cb(err);
-        }
+      } catch (err) {
+        cb(err);
       }
-    )
+    }
+  )
 );
 
 passport.serializeUser((user, cb) => {
@@ -239,12 +236,12 @@ passport.deserializeUser(async (id, cb) => {
   }
 });
 
-app.post('/logout', function(req, res, next) {
-  req.logout(function(err) {
+app.post('/logout', function (req, res, next) {
+  req.logout(function (err) {
     if (err) { return next(err); }
     res.redirect('/');
   });
 });
-app.listen(port, ()=>{
+app.listen(port, () => {
   console.log(`BookGasm running at http://localhost:${port}`);
 })
