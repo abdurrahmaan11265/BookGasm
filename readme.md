@@ -50,6 +50,11 @@ npm start
 ```
 Then open `http://localhost:3000`.
 
+## Test Credentials
+Use the following credentials to log in:
+- **Email**: khiladi@example.com
+- **Password**: maihudon
+
 ## Scripts
 - **start**: `node app.js`
 
